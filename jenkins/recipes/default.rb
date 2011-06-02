@@ -18,21 +18,21 @@
 # limitations under the License.
 #
 
-remote_file "/tmp/jenkins-ci.org.key" do
-  source "http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key"
-  not_if "apt-key list | grep '1024D/D50582E6'"
-  notifies :run, execute["add jenkins apt key"], :immediately
+execute "apt-get update for jenkins" do
+  command "apt-get update"
+  action :nothing
 end
 
 execute "add jenkins apt key" do
   command "apt-key add /tmp/jenkins-ci.org.key"
   action :nothing
-  notifies :run, execute["apt-get update for jenkins"], :immediately
+  notifies :run, resources("execute[apt-get update for jenkins]"), :immediately
 end
 
-execute "apt-get update for jenkins" do
-  command "apt-get update"
-  action :nothing
+remote_file "/tmp/jenkins-ci.org.key" do
+  source "http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key"
+  not_if "apt-key list | grep '1024D/D50582E6'"
+  notifies :run, resources("execute[add jenkins apt key]"), :immediately
 end
 
 package "jenkins"

@@ -1,3 +1,3 @@
-### fast_ip cookbooks
+### Boundary cookbooks
 
 A collection of cookbooks.

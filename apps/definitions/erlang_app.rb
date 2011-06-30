@@ -18,7 +18,7 @@
 # limitations under the License.
 #
 
-define :erlang_app, :name => nil, :app_options => nil do
+define :erlang_app, :name => nil, :app_options => nil, :post_upgrade_service_action => :nothing, :upgrade_code => nil do
   
   include_recipe "runit"
   
@@ -81,6 +81,7 @@ define :erlang_app, :name => nil, :app_options => nil do
     
     remote_file "/tmp/#{filename}" do
       source "#{deploy_config["install"]["repo_url"]}/#{deploy_config["id"]}/releases/#{filename}"
+      mode 0644
       not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}"
     end
     
@@ -125,16 +126,23 @@ define :erlang_app, :name => nil, :app_options => nil do
       not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
     end
     
-    erl_call "upgrade #{deploy_config["id"]}" do
-      node_name "#{deploy_config["id"]}@#{node[:fqdn]}"
-      name_type "name"
-      cookie deploy_config["erlang"]["cookie"]
-      code <<-EOH
+    if params[:upgrade_code].nil?
+      upgrade_code = <<-EOH
       release_handler:unpack_release("#{deploy_config["id"]}_#{deploy_config["version"]}"),
       release_handler:install_release("#{deploy_config["version"]}"),
       release_handler:make_permanent("#{deploy_config["version"]}").
       EOH
+    else
+      upgrade_code = params[:upgrade_code]
+    end
+    
+    erl_call "upgrade #{deploy_config["id"]}" do
+      node_name "#{deploy_config["id"]}@#{node[:fqdn]}"
+      name_type "name"
+      cookie deploy_config["erlang"]["cookie"]
+      code upgrade_code
       not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
+      notifies params[:post_upgrade_service_action], resources("service" => deploy_config["id"])
     end
     
     #
@@ -153,9 +161,9 @@ define :erlang_app, :name => nil, :app_options => nil do
     if deploy_config["config"]["additional_directories"]
       deploy_config["config"]["additional_directories"].each do |dir|
         directory dir do
-          owner   deploy_config["system"]["user"]
-          group   deploy_config["system"]["group"]
-          mode    0755
+          owner deploy_config["system"]["user"]
+          group deploy_config["system"]["group"]
+          mode 0755
           recursive true
         end
       end

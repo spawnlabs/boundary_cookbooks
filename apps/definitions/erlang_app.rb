@@ -1,23 +1,3 @@
-#
-# Author:: Joe Williams (<j@boundary.com>)
-# Cookbook Name:: apps
-# Definition:: erlang_app
-#
-# Copyright 2011, Boundary
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
 define :erlang_app, :name => nil, :app_options => nil, :post_upgrade_service_action => :nothing, :upgrade_code => nil do
   
   include_recipe "runit"
@@ -118,34 +98,6 @@ define :erlang_app, :name => nil, :app_options => nil, :post_upgrade_service_act
     end
     
     #
-    # upgrade stuff
-    #
-    
-    remote_file "#{deploy_config["install"]["path"]}/releases/#{filename}" do
-      source "#{deploy_config["install"]["repo_url"]}/#{deploy_config["id"]}/upgrades/#{filename}"
-      not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
-    end
-    
-    if params[:upgrade_code].nil?
-      upgrade_code = <<-EOH
-      release_handler:unpack_release("#{deploy_config["id"]}_#{deploy_config["version"]}"),
-      release_handler:install_release("#{deploy_config["version"]}"),
-      release_handler:make_permanent("#{deploy_config["version"]}").
-      EOH
-    else
-      upgrade_code = params[:upgrade_code]
-    end
-    
-    erl_call "upgrade #{deploy_config["id"]}" do
-      node_name "#{deploy_config["id"]}@#{node[:fqdn]}"
-      name_type "name"
-      cookie deploy_config["erlang"]["cookie"]
-      code upgrade_code
-      not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
-      notifies params[:post_upgrade_service_action], resources("service" => deploy_config["id"])
-    end
-    
-    #
     # setup log dir
     #
     
@@ -183,7 +135,7 @@ define :erlang_app, :name => nil, :app_options => nil, :post_upgrade_service_act
       notifies :restart, resources(:service => "#{deploy_config["id"]}")
     end
     
-    # erlang config
+    # erlang main config
     template "#{deploy_config["install"]["path"]}/etc/#{deploy_config["id"]}.config" do
       source "#{deploy_config["type"]}/#{deploy_config["id"]}/config.erb"
       owner deploy_config["system"]["user"]
@@ -191,6 +143,15 @@ define :erlang_app, :name => nil, :app_options => nil, :post_upgrade_service_act
       mode 0644
       variables :deploy_config => deploy_config, :app_options => params[:app_options]
       notifies :restart, resources(:service => "#{deploy_config["id"]}")
+    end
+    
+    # erlang sys config
+    template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/sys.config" do
+      source "#{deploy_config["type"]}/#{deploy_config["id"]}/config.erb"
+      owner deploy_config["system"]["user"]
+      group deploy_config["system"]["group"]
+      mode 0644
+      variables :deploy_config => deploy_config, :app_options => params[:app_options]
     end
     
     # erlang vm.args
@@ -228,6 +189,34 @@ define :erlang_app, :name => nil, :app_options => nil, :post_upgrade_service_act
           variables :deploy_config => deploy_config, :app_options => params[:app_options]
         end
       end
+    end
+    
+    #
+    # upgrade stuff
+    #
+    
+    remote_file "#{deploy_config["install"]["path"]}/releases/#{filename}" do
+      source "#{deploy_config["install"]["repo_url"]}/#{deploy_config["id"]}/upgrades/#{filename}"
+      not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
+    end
+    
+    if params[:upgrade_code].nil?
+      upgrade_code = <<-EOH
+      release_handler:unpack_release("#{deploy_config["id"]}_#{deploy_config["version"]}"),
+      release_handler:install_release("#{deploy_config["version"]}"),
+      release_handler:make_permanent("#{deploy_config["version"]}").
+      EOH
+    else
+      upgrade_code = params[:upgrade_code]
+    end
+    
+    erl_call "upgrade #{deploy_config["id"]}" do
+      node_name "#{deploy_config["id"]}@#{node[:fqdn]}"
+      name_type "name"
+      cookie deploy_config["erlang"]["cookie"]
+      code upgrade_code
+      not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
+      notifies params[:post_upgrade_service_action], resources("service" => deploy_config["id"])
     end
     
     #

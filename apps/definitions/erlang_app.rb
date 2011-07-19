@@ -145,15 +145,6 @@ define :erlang_app, :name => nil, :app_options => nil, :post_upgrade_service_act
       notifies :restart, resources(:service => "#{deploy_config["id"]}")
     end
     
-    # erlang sys config
-    template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/sys.config" do
-      source "#{deploy_config["type"]}/#{deploy_config["id"]}/config.erb"
-      owner deploy_config["system"]["user"]
-      group deploy_config["system"]["group"]
-      mode 0644
-      variables :deploy_config => deploy_config, :app_options => params[:app_options]
-    end
-    
     # erlang vm.args
     template "#{deploy_config["install"]["path"]}/etc/vm.args" do
       source "#{deploy_config["type"]}/vm.args.erb"
@@ -197,14 +188,17 @@ define :erlang_app, :name => nil, :app_options => nil, :post_upgrade_service_act
     
     remote_file "#{deploy_config["install"]["path"]}/releases/#{filename}" do
       source "#{deploy_config["install"]["repo_url"]}/#{deploy_config["id"]}/upgrades/#{filename}"
+      owner deploy_config["system"]["user"]
+      group deploy_config["system"]["group"]
       not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
     end
     
     if params[:upgrade_code].nil?
       upgrade_code = <<-EOH
-      release_handler:unpack_release("#{deploy_config["id"]}_#{deploy_config["version"]}"),
-      release_handler:install_release("#{deploy_config["version"]}"),
-      release_handler:make_permanent("#{deploy_config["version"]}").
+      {ok, _} = release_handler:unpack_release("#{deploy_config["id"]}_#{deploy_config["version"]}"),
+      {ok, _} = file:copy("#{deploy_config["install"]["path"]}/etc/#{deploy_config["id"]}.config", "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/sys.config"),
+      {ok, _, _} = release_handler:install_release("#{deploy_config["version"]}"),
+      ok = release_handler:make_permanent("#{deploy_config["version"]}").
       EOH
     else
       upgrade_code = params[:upgrade_code]
@@ -217,6 +211,16 @@ define :erlang_app, :name => nil, :app_options => nil, :post_upgrade_service_act
       code upgrade_code
       not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
       notifies params[:post_upgrade_service_action], resources("service" => deploy_config["id"])
+    end
+    
+    # erlang sys config
+    template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/sys.config" do
+      source "#{deploy_config["type"]}/#{deploy_config["id"]}/config.erb"
+      owner deploy_config["system"]["user"]
+      group deploy_config["system"]["group"]
+      mode 0644
+      variables :deploy_config => deploy_config, :app_options => params[:app_options]
+      only_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
     end
     
     #

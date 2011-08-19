@@ -1,0 +1,13 @@
+NameVirtualHost <%= node[:ipaddress] %>:80
+
+<VirtualHost <%= node[:ipaddress] %>:80>
+        DocumentRoot <%= @deploy_config["install"]["path"] %>/<%= @deploy_config["id"] %>
+        ServerName <%= @deploy_config["config"]["server_name"] %>
+        ErrorLog /var/log/apache2/<%= @deploy_config["id"] %>-error.log
+ 
+        LogLevel warn
+ 
+        CustomLog /var/log/apache2/<%= @deploy_config["id"] %>-access.log combined
+        ServerSignature On
+
+</VirtualHost>

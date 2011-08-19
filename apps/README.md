@@ -1,6 +1,6 @@
 ### The Apps Cookbook
 
-This is the apps cookbook. The idea here is to use definitions to lay out how all apps of a certain type are deployed. So all apps of the same type get deployed the same way. All apps are deployed to use runit and even setup iptables rules. These definitions make use of databags to store installation and configuration data. Each app is expected to have a databag item in a databag called "apps", the databag item name and app name are expected to be the same. The definition will pull the databag item for an app and deploy it using that data. Additionally the definition can accept an app_options parameter which can be used for config data not stored in a databag, generally this would be based on search or something dynamically determined at chef-client run time. This cookbook includes an example erlang, jvm and ruby recipe and files. The following databag item should work with it. Note that jvm and erlang applications ues "fat" jars and tarballs while ruby uses git.
+This is the apps cookbook. The idea here is to use definitions to lay out how all apps of a certain type are deployed. So all apps of the same type get deployed the same way. All apps are deployed to use runit and even setup iptables rules. These definitions make use of databags to store installation and configuration data. Each app is expected to have a databag item in a databag called "apps", the databag item name and app name are expected to be the same. The definition will pull the databag item for an app and deploy it using that data. Additionally the definition can accept an app_options parameter which can be used for config data not stored in a databag, generally this would be based on search or something dynamically determined at chef-client run time. This cookbook includes an example erlang, jvm and ruby recipe and files. The following databag item should work with it. Note that jvm and erlang applications ues "fat" jars and tarballs while ruby and static uses git.
 
 ### Databag Item Example
 
@@ -126,6 +126,35 @@ This is the apps cookbook. The idea here is to use definitions to lay out how al
       "type": "ruby"
     }
 
+### static
+
+    {
+      "config": {
+        "webserver": "apache",
+        "server_name": "zombo.com",
+        "git": {
+          "reference": "HEAD",
+          "repository": "git@github.com:blah/yourepo.git"
+        },
+        "key": {
+          "public": "ssh-rsa",
+          "private": "-----BEGIN RSA PRIVATE KEY-----"
+        }
+      },
+      "system": {
+        "group": "zombo",
+        "gid": 439,
+        "uid": 439,
+        "home": "/home/zombo",
+        "user": "zombo"
+      },
+      "id": "zombo",
+      "install": {
+        "path": "/opt/zombo"
+      },
+      "type": "static"
+    }
+
 
 The definition expects a certain databag layout, above is an example. 
 
@@ -153,7 +182,7 @@ For erlang deploys this is the version set in your reltool.config.
 
 The type of application you are deploying.
 
-#### "erlang", "jvm" and "ruby"
+#### "erlang", "jvm", "static" and "ruby"
 
 This has contains details specific to the type of app you are deploying, generally it contains VM configuration and start up options.
 

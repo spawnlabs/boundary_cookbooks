@@ -33,10 +33,6 @@ action :install_plugin do
   install_plugin(new_resource)
 end
 
-action :reload_configuration do
-  reload_configuration(new_resource)
-end
-
 private
 
 
@@ -78,14 +74,6 @@ def install_plugin(new_resource)
     run_command(command)
     Chef::Log.info("Installed Jenkins plugin [#{new_resource.name}]")    
   end
-end
-
-def reload_configuration(new_resource)
-  # reload configurations from disk
-  base_command = build_base_command(new_resource)
-  command = "#{base_command} reload-configuration"
-  run_command(command)
-  Chef::Log.info("Reloaded Jenkins configurations from disk")
 end
 
 def setup_empty_config(file)

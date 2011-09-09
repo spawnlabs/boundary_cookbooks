@@ -23,16 +23,12 @@
 # if you want your own config rewrite the config and 
 # reload the configuration from disk using this provider
 
-jenkins "test" do
-  action :create_job
-  cli_jar "/var/run/jenkins/war/WEB-INF/jenkins-cli.jar"
-  url "http://localhost:8080"
-  path "/var/lib/jenkins"
-end
+# wrapped up in a definition
+jenkins_job "job"
 
 # delete a job
 
-jenkins "test" do
+jenkins "job" do
   action :delete_job
   cli_jar "/var/run/jenkins/war/WEB-INF/jenkins-cli.jar"
   url "http://localhost:8080"
@@ -42,18 +38,5 @@ end
 # install a plugin
 # dont forget, plugin installs require a restart
 
-jenkins "scp" do
-  action :install_plugin
-  cli_jar "/var/run/jenkins/war/WEB-INF/jenkins-cli.jar"
-  url "http://localhost:8080"
-  path "/var/lib/jenkins"
-end
-
-# reload configs from disk
-
-jenkins "reload config" do
-  action :reload_configuration
-  cli_jar "/var/run/jenkins/war/WEB-INF/jenkins-cli.jar"
-  url "http://localhost:8080"
-  path "/var/lib/jenkins"
-end
+# wrapped up in a definition
+jenkins_plugin "scp"

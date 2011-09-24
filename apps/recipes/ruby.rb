@@ -19,5 +19,6 @@
 #
 
 apps_ruby "example" do
+  action :deploy
   app_options "something"
 end

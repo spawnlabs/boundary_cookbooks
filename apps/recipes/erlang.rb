@@ -18,6 +18,6 @@
 # limitations under the License.
 #
 
-erlang_app "example" do
+apps_erlang "example" do
   app_options "something"
 end

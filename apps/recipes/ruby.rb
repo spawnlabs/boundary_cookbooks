@@ -18,6 +18,6 @@
 # limitations under the License.
 #
 
-ruby_app "example" do
+apps_ruby "example" do
   app_options "something"
 end

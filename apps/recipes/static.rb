@@ -18,6 +18,6 @@
 # limitations under the License.
 #
 
-static_app "example" do
+apps_static "example" do
   app_options "something"
 end

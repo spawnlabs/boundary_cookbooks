@@ -18,6 +18,6 @@
 # limitations under the License.
 #
 
-jvm_app "example" do
+apps_jvm "example" do
   app_options "something"
 end

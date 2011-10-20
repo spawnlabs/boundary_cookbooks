@@ -26,7 +26,7 @@ define :install_standard_erlang_dependencies, :name => nil, :deploy_config => ni
 
   include_recipe "erlang::erl_call"
   include_recipe "erlang::epmd"
-  
+
 end
 
 #
@@ -34,21 +34,21 @@ end
 #
 
 define :install_erlang_release, :name => nil, :deploy_config => nil do
-  
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   filename = "#{deploy_config["id"]}_#{deploy_config["version"]}.tar.gz"
-  
+
   remote_file "/tmp/#{filename}" do
     source "#{deploy_config["install"]["repo_url"]}/#{deploy_config["id"]}/releases/#{filename}"
     mode 0644
     not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}"
   end
-  
+
   bash "install #{deploy_config["id"]}" do
     user "root"
     cwd "/opt"
@@ -58,7 +58,7 @@ define :install_erlang_release, :name => nil, :deploy_config => nil do
     EOH
     not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}"
   end
-  
+
 end
 
 #
@@ -66,23 +66,24 @@ end
 #
 
 define :erlang_config, :name => nil, :deploy_config => nil, :app_options => nil do
-  
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
-  template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/sys.config" do
-    source "#{deploy_config["type"]}/#{deploy_config["id"]}/config.erb"
-    owner deploy_config["system"]["user"]
-    group deploy_config["system"]["group"]
-    mode 0644
-    variables :deploy_config => deploy_config, :app_options => params[:app_options]
-    only_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
-    notifies :restart, resources(:service => "#{deploy_config["id"]}")
+
+  if ::File.exists?("#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}")
+    template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/sys.config" do
+      source "#{deploy_config["type"]}/#{deploy_config["id"]}/config.erb"
+      owner deploy_config["system"]["user"]
+      group deploy_config["system"]["group"]
+      mode 0644
+      variables :deploy_config => deploy_config, :app_options => params[:app_options]
+      notifies :restart, resources(:service => "#{deploy_config["id"]}")
+    end
   end
-  
+
 end
 
 #
@@ -90,59 +91,90 @@ end
 #
 
 define :erlang_vm_args, :name => nil, :deploy_config => nil, :app_options => nil do
-  
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
-  template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/vm.args" do
-    source "#{deploy_config["type"]}/#{deploy_config["id"]}/vm.args.erb"
-    owner deploy_config["system"]["user"]
-    group deploy_config["system"]["group"]
-    mode 0644
-    variables :deploy_config => deploy_config, :app_options => params[:app_options]
-    notifies :restart, resources(:service => "#{deploy_config["id"]}")
+
+  if ::File.exists?("#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}")
+    template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/vm.args" do
+      source "#{deploy_config["type"]}/#{deploy_config["id"]}/vm.args.erb"
+      owner deploy_config["system"]["user"]
+      group deploy_config["system"]["group"]
+      mode 0644
+      variables :deploy_config => deploy_config, :app_options => params[:app_options]
+      notifies :restart, resources(:service => "#{deploy_config["id"]}")
+    end
   end
-  
+
 end
 
 #
 # erlang hot upgrade
 #
 
-define :erlang_hot_upgrade, :name => nil, :deploy_config => nil, :upgrade_code => nil do
+define :erlang_hot_upgrade, :name => nil, :deploy_config => nil, :upgrade_code => nil, :app_options => nil do
 
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   remote_file "#{deploy_config["install"]["path"]}/releases/#{filename}" do
     source "#{deploy_config["install"]["repo_url"]}/#{deploy_config["id"]}/upgrades/#{filename}"
     owner deploy_config["system"]["user"]
     group deploy_config["system"]["group"]
     not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
   end
-  
+
+  unpack_code = <<-EOH
+  {ok, _} = release_handler:unpack_release("#{deploy_config["id"]}_#{deploy_config["version"]}").
+  EOH
+
+  erl_call "unpack #{deploy_config["id"]}" do
+    node_name "#{deploy_config["id"]}@#{node[:fqdn]}"
+    name_type "name"
+    cookie deploy_config["erlang"]["cookie"]
+    code unpack_code
+    not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
+  end
+
+  template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/sys.config" do
+    source "#{deploy_config["type"]}/#{deploy_config["id"]}/config.erb"
+    owner deploy_config["system"]["user"]
+    group deploy_config["system"]["group"]
+    mode 0644
+    variables :deploy_config => deploy_config, :app_options => params[:app_options]
+  end
+
+  template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/vm.args" do
+    source "#{deploy_config["type"]}/#{deploy_config["id"]}/vm.args.erb"
+    owner deploy_config["system"]["user"]
+    group deploy_config["system"]["group"]
+    mode 0644
+    variables :deploy_config => deploy_config, :app_options => params[:app_options]
+  end
+
   if params[:upgrade_code]
     upgrade_code = params[:upgrade_code]
   else
     upgrade_code = <<-EOH
-    {ok, _} = release_handler:unpack_release("#{deploy_config["id"]}_#{deploy_config["version"]}"),
     {ok, _, _} = release_handler:install_release("#{deploy_config["version"]}"),
     ok = release_handler:make_permanent("#{deploy_config["version"]}").
     EOH
   end
-  
+
   erl_call "upgrade #{deploy_config["id"]}" do
     node_name "#{deploy_config["id"]}@#{node[:fqdn]}"
     name_type "name"
     cookie deploy_config["erlang"]["cookie"]
     code upgrade_code
-    not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}"
+    not_if do
+        (`cat #{deploy_config["install"]["path"]}/releases/start_erl.data`.include?(deploy_config["version"]))
+    end
   end
 
 end

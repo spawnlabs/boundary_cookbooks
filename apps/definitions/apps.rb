@@ -23,15 +23,15 @@
 #
 
 define :install_app_dependencies, :name => nil, :deploy_config => nil do
-  
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-    
+
   if deploy_config["dependencies"]
-    
+
     case deploy_config["type"]
     when "ruby"
       if deploy_config["dependencies"]["gems"]
@@ -47,13 +47,13 @@ define :install_app_dependencies, :name => nil, :deploy_config => nil do
         end
       end
     end
-  
+
     if deploy_config["dependencies"]["recipes"]
       deploy_config["dependencies"]["recipes"].each do |dep|
         include_recipe dep
       end
     end
-    
+
     if deploy_config["dependencies"]["system"]
       deploy_config["dependencies"]["system"].each do |dep|
         package dep
@@ -61,7 +61,7 @@ define :install_app_dependencies, :name => nil, :deploy_config => nil do
     end
 
   end
-  
+
 end
 
 #
@@ -69,15 +69,15 @@ end
 #
 
 define :setup_runit_service, :name => nil, :deploy_config => nil do
-  
+
   include_recipe "runit"
- 
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   runit_service "#{deploy_config["id"]}" do
     template_name "app"
     options deploy_config
@@ -87,7 +87,7 @@ define :setup_runit_service, :name => nil, :deploy_config => nil do
     supports :status => true, :restart => true
     action [ :start ]
   end
-  
+
 end
 
 #
@@ -95,13 +95,13 @@ end
 #
 
 define :create_user_group_home, :name => nil, :deploy_config => nil do
-  
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-    
+
   group deploy_config["system"]["group"] do
     gid deploy_config["system"]["gid"]
   end
@@ -119,7 +119,7 @@ define :create_user_group_home, :name => nil, :deploy_config => nil do
     group deploy_config["system"]["group"]
     mode 0700
   end
-  
+
 end
 
 #
@@ -127,13 +127,13 @@ end
 #
 
 define :chown_install_directory, :name => nil, :deploy_config => nil do
-  
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   bash "#{deploy_config["install"]["path"]} permissions" do
     user "root"
     cwd "/opt"
@@ -141,7 +141,7 @@ define :chown_install_directory, :name => nil, :deploy_config => nil do
     (chown -R #{deploy_config["system"]["user"]}:#{deploy_config["system"]["group"]} #{deploy_config["install"]["path"]})
     EOH
   end
-    
+
 end
 
 #
@@ -149,18 +149,18 @@ end
 #
 
 define :log_directory, :name => nil, :deploy_config => nil do
-  
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   directory "/var/log/#{deploy_config["id"]}" do
     owner deploy_config["system"]["user"]
     group deploy_config["system"]["group"]
   end
-  
+
 end
 
 #
@@ -174,7 +174,7 @@ define :additional_directories, :name => nil, :deploy_config => nil do
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   if deploy_config["config"]["additional_directories"]
     deploy_config["config"]["additional_directories"].each do |dir|
       directory dir do
@@ -185,7 +185,7 @@ define :additional_directories, :name => nil, :deploy_config => nil do
       end
     end
   end
-  
+
 end
 
 #
@@ -199,14 +199,14 @@ define :additional_configs, :name => nil, :deploy_config => nil, :app_options =>
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   # make sure the etc dir exists
-  
+
   directory "#{deploy_config["install"]["path"]}/etc" do
     owner deploy_config["system"]["user"]
     group deploy_config["system"]["group"]
   end
-        
+
   if deploy_config["config"]["additional_config_templates"]
     deploy_config["config"]["additional_config_templates"].each do |config|
       template "#{deploy_config["install"]["path"]}/etc/#{config}" do
@@ -219,7 +219,7 @@ define :additional_configs, :name => nil, :deploy_config => nil, :app_options =>
       end
     end
   end
-  
+
 end
 
 #
@@ -227,20 +227,20 @@ end
 #
 
 define :additional_binaries, :name => nil, :deploy_config => nil, :app_options => nil do
-  
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   # make sure the bin dir exists
-  
+
   directory "#{deploy_config["install"]["path"]}/bin" do
     owner deploy_config["system"]["user"]
     group deploy_config["system"]["group"]
   end
-  
+
   if deploy_config["config"]["additional_bin_templates"]
     deploy_config["config"]["additional_bin_templates"].each do |config|
       template "#{deploy_config["install"]["path"]}/bin/#{config}" do
@@ -252,7 +252,7 @@ define :additional_binaries, :name => nil, :deploy_config => nil, :app_options =
       end
     end
   end
-  
+
 end
 
 #
@@ -260,13 +260,13 @@ end
 #
 
 define :start_script, :name => nil, :deploy_config => nil, :app_options => nil do
-  
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   template "#{deploy_config["install"]["path"]}/bin/#{deploy_config["id"]}" do
     source "#{deploy_config["type"]}/#{deploy_config["id"]}/#{deploy_config["id"]}.erb"
     owner deploy_config["system"]["user"]
@@ -303,20 +303,20 @@ end
 #
 
 define :git_setup, :name => nil, :deploy_config => nil, :app_options => nil do
-  
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   # make sure the etc dir exists
-  
+
   directory "#{deploy_config["install"]["path"]}/etc" do
     owner   deploy_config["system"]["user"]
     group   deploy_config["system"]["group"]
   end
-  
+
   template "#{deploy_config["install"]["path"]}/etc/git_ssh.sh" do
     source  "#{deploy_config["type"]}/git_ssh.sh.erb"
     owner   deploy_config["system"]["user"]
@@ -324,7 +324,7 @@ define :git_setup, :name => nil, :deploy_config => nil, :app_options => nil do
     mode    0755
     variables :deploy_config => deploy_config, :app_options => params[:app_options]
   end
-  
+
   %w[ gitconfig deploy_key deploy_key.pub ].each do |filename|
     template "#{deploy_config["install"]["path"]}/etc/#{filename}" do
       source  "#{deploy_config["type"]}/#{filename}.erb"

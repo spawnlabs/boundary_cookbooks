@@ -23,9 +23,9 @@
 #
 
 define :install_standard_ruby_dependencies, :name => nil, :deploy_config => nil do
-  
+
   include_recipe "git"
-  
+
 end
 
 #
@@ -33,13 +33,13 @@ end
 #
 
 define :git_deploy_ruby, :name => nil, :deploy_config => nil do
-  
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   git "#{deploy_config["install"]["path"]}/#{deploy_config["id"]}" do
     repository  deploy_config["config"]["git"]["repository"]
     reference   deploy_config["config"]["git"]["reference"]
@@ -47,7 +47,7 @@ define :git_deploy_ruby, :name => nil, :deploy_config => nil do
     ssh_wrapper "#{deploy_config["install"]["path"]}/etc/git_ssh.sh"
     notifies(:restart, resources(:service => deploy_config["id"]))
   end
-  
+
 end
 
 define :setup_main_config_yml, :name => nil, :deploy_config => nil, :app_options => nil do
@@ -57,7 +57,7 @@ define :setup_main_config_yml, :name => nil, :deploy_config => nil, :app_options
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   template "#{deploy_config["install"]["path"]}/etc/#{deploy_config["id"]}.yml" do
     source  "ruby/#{deploy_config["id"]}/config.yml.erb"
     owner   deploy_config["system"]["user"]
@@ -66,7 +66,7 @@ define :setup_main_config_yml, :name => nil, :deploy_config => nil, :app_options
     variables :deploy_config => deploy_config, :app_options => params[:app_options]
     notifies :restart, resources(:service => "#{deploy_config["id"]}")
   end
-  
+
 end
 
 #
@@ -74,20 +74,20 @@ end
 #
 
 define :bundle_install, :name => nil, :deploy_config => nil do
-  
+
   if params[:deploy_config]
     deploy_config = params[:deploy_config]
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   if deploy_config["config"]["bundler"]
     execute "bundle_install" do
       cwd "#{deploy_config["install"]["path"]}/#{deploy_config["id"]}"
       command "bundle install --deployment --without=test:development"
     end
   end
-  
+
 end
 
 #
@@ -101,7 +101,7 @@ define :unicorn_config, :name => nil, :deploy_config => nil, :app_options => nil
   else
     deploy_config =  data_bag_item("apps", params[:name])
   end
-  
+
   if deploy_config["config"]["unicorn"]
     template "#{deploy_config["install"]["path"]}/#{deploy_config["id"]}/unicorn.rb" do
       source "ruby/#{deploy_config["id"]}/unicorn.rb.erb"
@@ -111,12 +111,12 @@ define :unicorn_config, :name => nil, :deploy_config => nil, :app_options => nil
       variables :deploy_config => deploy_config, :app_options => params[:app_options]
       notifies :restart, resources(:service => "#{deploy_config["id"]}")
     end
-  
+
     directory "#{deploy_config["install"]["path"]}/#{deploy_config["id"]}/pids" do
       owner   deploy_config["system"]["user"]
       group   deploy_config["system"]["group"]
       mode 0755
     end
   end
-  
+
 end

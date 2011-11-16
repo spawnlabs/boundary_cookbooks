@@ -134,6 +134,8 @@ define :chown_install_directory, :name => nil, :deploy_config => nil do
     deploy_config =  data_bag_item("apps", params[:name])
   end
 
+  directory "#{deploy_config["install"]["path"]}"
+
   bash "#{deploy_config["install"]["path"]} permissions" do
     user "root"
     cwd "/opt"

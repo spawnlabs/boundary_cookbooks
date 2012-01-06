@@ -46,8 +46,41 @@ action :deploy do
       deploy_config deploy_config
     end
 
+    setup_runit_service new_resource.name do
+      deploy_config deploy_config
+    end
+
     chown_install_directory new_resource.name do
       deploy_config deploy_config
+    end
+
+    if deploy_config["install"]["tarball"]
+
+      #
+      # tarball based deploy
+      #
+
+      tarball_deploy_ruby new_resource.name do
+        deploy_config deploy_config
+        app_options app_options
+      end
+
+    else
+
+      #
+      # git deploy (by default)
+      #
+
+      git_setup new_resource.name do
+        deploy_config deploy_config
+        app_options app_options
+      end
+
+      git_deploy_ruby new_resource.name do
+        deploy_config deploy_config
+        app_options app_options
+      end
+
     end
 
     log_directory new_resource.name do
@@ -68,10 +101,6 @@ action :deploy do
       app_options app_options
     end
 
-    setup_runit_service new_resource.name do
-      deploy_config deploy_config
-    end
-
     #
     # general config
     #
@@ -82,20 +111,6 @@ action :deploy do
     end
 
     setup_main_config_yml new_resource.name do
-      deploy_config deploy_config
-      app_options app_options
-    end
-
-    #
-    # git deploy
-    #
-
-    git_setup new_resource.name do
-      deploy_config deploy_config
-      app_options app_options
-    end
-
-    git_deploy_ruby new_resource.name do
       deploy_config deploy_config
       app_options app_options
     end

@@ -50,6 +50,43 @@ define :git_deploy_ruby, :name => nil, :deploy_config => nil do
 
 end
 
+define :tarball_deploy_ruby, :name => nil, :deploy_config => nil do
+
+  if params[:deploy_config]
+    deploy_config = params[:deploy_config]
+  else
+    deploy_config =  data_bag_item("apps", params[:name])
+  end
+
+  filename = "#{deploy_config["id"]}_#{deploy_config["version"]}.tar.gz"
+
+  remote_file "/tmp/#{filename}" do
+    source "#{deploy_config["install"]["repo_url"]}/#{deploy_config["id"]}/#{filename}"
+    mode 0644
+    not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/#{deploy_config["id"]}_#{deploy_config["version"]}"
+  end
+
+  bash "install #{deploy_config["id"]}" do
+    user "root"
+    cwd "/tmp"
+    code <<-EOH
+    (tar zxf /tmp/#{filename})
+    (mv #{deploy_config["id"]} #{deploy_config["install"]["path"]}/#{deploy_config["id"]}_#{deploy_config["version"]})
+    (rm -f /tmp/#{filename})
+    (chown -R #{deploy_config["system"]["user"]}:#{deploy_config["system"]["group"]} #{deploy_config["install"]["path"]})
+    EOH
+    not_if "/usr/bin/test -d #{deploy_config["install"]["path"]}/#{deploy_config["id"]}_#{deploy_config["version"]}"
+  end
+
+  link "#{deploy_config["install"]["path"]}/#{deploy_config["id"]}" do
+    to "#{deploy_config["install"]["path"]}/#{deploy_config["id"]}_#{deploy_config["version"]}"
+    owner deploy_config["system"]["user"]
+    group deploy_config["system"]["group"]
+    notifies :restart, resources(:service => "#{deploy_config["id"]}")
+  end
+
+end
+
 define :setup_main_config_yml, :name => nil, :deploy_config => nil, :app_options => nil do
 
   if params[:deploy_config]

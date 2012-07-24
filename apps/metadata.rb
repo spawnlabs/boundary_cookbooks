@@ -1,6 +1,6 @@
 maintainer       "boundary"
 maintainer_email "j@boundary.com"
-license          "all rights reserved"
+license          "Apache 2.0"
 description      "Installs/Configures various apps"
 long_description "Installs/Configures various apps"
 version          "0.1"

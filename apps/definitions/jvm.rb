@@ -62,11 +62,10 @@ define :install_jvm_release, :name => nil, :deploy_config => nil do
     deploy_config =  data_bag_item("apps", params[:name])
   end
 
-  local_filename = "#{deploy_config["id"]}.jar"
-  remote_filename = "#{deploy_config["id"]}_#{deploy_config["version"]}.jar"
+  filename = "#{deploy_config["id"]}_#{deploy_config["version"]}.jar"
 
-  remote_file "#{deploy_config["install"]["path"]}/lib/#{local_filename}" do
-    source "#{deploy_config["install"]["repo_url"]}/#{deploy_config["id"]}/#{remote_filename}"
+  remote_file "#{deploy_config["install"]["path"]}/lib/#{filename}" do
+    source "#{deploy_config["install"]["repo_url"]}/#{deploy_config["id"]}/#{filename}"
     backup false
     mode 0644
     checksum deploy_config["checksum"]
@@ -88,7 +87,7 @@ define :setup_log4j_config, :name => nil, :deploy_config => nil, :app_options =>
   end
 
   template "#{deploy_config["install"]["path"]}/etc/log4j.properties" do
-    source "jvm/log4j.properties.erb"
+    source "log4j.properties.erb"
     owner deploy_config["system"]["user"]
     group deploy_config["system"]["group"]
     mode 0644

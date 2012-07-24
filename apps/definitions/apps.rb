@@ -212,7 +212,7 @@ define :additional_configs, :name => nil, :deploy_config => nil, :app_options =>
   if deploy_config["config"]["additional_config_templates"]
     deploy_config["config"]["additional_config_templates"].each do |config|
       template "#{deploy_config["install"]["path"]}/etc/#{config}" do
-        source "#{deploy_config["type"]}/#{deploy_config["id"]}/#{config}.erb"
+        source "#{config}.erb"
         owner deploy_config["system"]["user"]
         group deploy_config["system"]["group"]
         mode 0644
@@ -246,7 +246,7 @@ define :additional_binaries, :name => nil, :deploy_config => nil, :app_options =
   if deploy_config["config"]["additional_bin_templates"]
     deploy_config["config"]["additional_bin_templates"].each do |config|
       template "#{deploy_config["install"]["path"]}/bin/#{config}" do
-        source "#{deploy_config["type"]}/#{deploy_config["id"]}/#{config}.erb"
+        source "#{config}.erb"
         owner deploy_config["system"]["user"]
         group deploy_config["system"]["group"]
         mode 0755
@@ -270,12 +270,12 @@ define :start_script, :name => nil, :deploy_config => nil, :app_options => nil d
   end
 
   template "#{deploy_config["install"]["path"]}/bin/#{deploy_config["id"]}" do
-    source "#{deploy_config["type"]}/#{deploy_config["id"]}/#{deploy_config["id"]}.erb"
+    source "#{deploy_config["id"]}.erb"
     owner deploy_config["system"]["user"]
     group deploy_config["system"]["group"]
     mode 0755
     variables :deploy_config => deploy_config, :app_options => params[:app_options]
-    notifies :restart, resources(:service => "#{deploy_config["id"]}")
+    #notifies :restart, resources(:service => "#{deploy_config["id"]}")
   end
 
 end
@@ -294,7 +294,7 @@ define :iptables, :name => nil, :deploy_config => nil do
 
   if deploy_config["config"]["iptables"]
     iptables_rule "10#{deploy_config["id"]}" do
-      source "#{deploy_config["type"]}/#{deploy_config["id"]}/iptables_rules.erb"
+      source "iptables_rules.erb"
     end
   end
 
@@ -320,7 +320,7 @@ define :git_setup, :name => nil, :deploy_config => nil, :app_options => nil do
   end
 
   template "#{deploy_config["install"]["path"]}/etc/git_ssh.sh" do
-    source  "#{deploy_config["type"]}/git_ssh.sh.erb"
+    source  "git_ssh.sh.erb"
     owner   deploy_config["system"]["user"]
     group   deploy_config["system"]["group"]
     mode    0755
@@ -329,7 +329,7 @@ define :git_setup, :name => nil, :deploy_config => nil, :app_options => nil do
 
   %w[ gitconfig deploy_key deploy_key.pub ].each do |filename|
     template "#{deploy_config["install"]["path"]}/etc/#{filename}" do
-      source  "#{deploy_config["type"]}/#{filename}.erb"
+      source  "#{filename}.erb"
       owner   deploy_config["system"]["user"]
       group   deploy_config["system"]["group"]
       mode    0600

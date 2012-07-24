@@ -96,7 +96,7 @@ define :setup_main_config_yml, :name => nil, :deploy_config => nil, :app_options
   end
 
   template "#{deploy_config["install"]["path"]}/etc/#{deploy_config["id"]}.yml" do
-    source  "ruby/#{deploy_config["id"]}/config.yml.erb"
+    source  "config.yml.erb"
     owner   deploy_config["system"]["user"]
     group   deploy_config["system"]["group"]
     mode    0644
@@ -120,8 +120,10 @@ define :bundle_install, :name => nil, :deploy_config => nil do
 
   if deploy_config["config"]["bundler"]
     execute "bundle_install" do
+      user deploy_config["system"]["user"]
+      group deploy_config["system"]["group"]
       cwd "#{deploy_config["install"]["path"]}/#{deploy_config["id"]}"
-      command "bundle install --deployment --without=test:development"
+      command "bundle install --local --deployment --without=test:development"
     end
   end
 
@@ -141,7 +143,7 @@ define :unicorn_config, :name => nil, :deploy_config => nil, :app_options => nil
 
   if deploy_config["config"]["unicorn"]
     template "#{deploy_config["install"]["path"]}/#{deploy_config["id"]}/unicorn.rb" do
-      source "ruby/#{deploy_config["id"]}/unicorn.rb.erb"
+      source "unicorn.rb.erb"
       owner   deploy_config["system"]["user"]
       group   deploy_config["system"]["group"]
       mode 0644

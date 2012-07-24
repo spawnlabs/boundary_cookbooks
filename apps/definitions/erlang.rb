@@ -75,7 +75,7 @@ define :erlang_config, :name => nil, :deploy_config => nil, :app_options => nil 
 
   if ::File.exists?("#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}")
     template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/sys.config" do
-      source "#{deploy_config["type"]}/#{deploy_config["id"]}/config.erb"
+      source "config.erb"
       owner deploy_config["system"]["user"]
       group deploy_config["system"]["group"]
       mode 0644
@@ -100,7 +100,7 @@ define :erlang_vm_args, :name => nil, :deploy_config => nil, :app_options => nil
 
   if ::File.exists?("#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}")
     template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/vm.args" do
-      source "#{deploy_config["type"]}/#{deploy_config["id"]}/vm.args.erb"
+      source "vm.args.erb"
       owner deploy_config["system"]["user"]
       group deploy_config["system"]["group"]
       mode 0644
@@ -143,7 +143,7 @@ define :erlang_hot_upgrade, :name => nil, :deploy_config => nil, :upgrade_code =
   end
 
   template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/sys.config" do
-    source "#{deploy_config["type"]}/#{deploy_config["id"]}/config.erb"
+    source "config.erb"
     owner deploy_config["system"]["user"]
     group deploy_config["system"]["group"]
     mode 0644
@@ -151,7 +151,7 @@ define :erlang_hot_upgrade, :name => nil, :deploy_config => nil, :upgrade_code =
   end
 
   template "#{deploy_config["install"]["path"]}/releases/#{deploy_config["version"]}/vm.args" do
-    source "#{deploy_config["type"]}/#{deploy_config["id"]}/vm.args.erb"
+    source "vm.args.erb"
     owner deploy_config["system"]["user"]
     group deploy_config["system"]["group"]
     mode 0644

@@ -112,6 +112,7 @@ action :deploy do
       deploy_config deploy_config
     end
 
+    new_resource.updated_by_last_action(true)
   else
     log "#{new_resource.name} app is not of type erlang, not deploying"
   end

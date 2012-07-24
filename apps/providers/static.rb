@@ -68,18 +68,33 @@ action :deploy do
       app_options app_options
     end
 
-    #
-    # git deploy
-    #
+    if deploy_config["install"]["tarball"]
 
-    git_setup new_resource.name do
-      deploy_config deploy_config
-      app_options app_options
-    end
+      #
+      # tarball based deploy
+      #
 
-    git_deploy_static new_resource.name do
-      deploy_config deploy_config
-      app_options app_options
+      tarball_deploy_static new_resource.name do
+        deploy_config deploy_config
+        app_options app_options
+      end
+
+    else
+
+      #
+      # git deploy
+      #
+
+      git_setup new_resource.name do
+        deploy_config deploy_config
+        app_options app_options
+      end
+
+      git_deploy_static new_resource.name do
+        deploy_config deploy_config
+        app_options app_options
+      end
+
     end
 
     #
@@ -95,6 +110,7 @@ action :deploy do
       deploy_config deploy_config
     end
 
+    new_resource.updated_by_last_action(true)
   else
     log "#{new_resource.name} app is not of type static, not deploying"
   end

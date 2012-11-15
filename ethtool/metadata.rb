@@ -1,0 +1,6 @@
+maintainer       "boundary"
+maintainer_email "j@boundary.com"
+license          "Apache 2.0"
+description      "Installs/Configures ethtool"
+long_description "Installs/Configures ethtool"
+version          "0.1"

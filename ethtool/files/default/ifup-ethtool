@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'yaml'
+
+ethtool = `which ethtool`.strip
+exitstatus = $?
+
+if exitstatus.to_i > 0
+
+  puts "could not find ethtool on PATH"
+  exit(0)
+
+else
+
+  iface = ENV['IFACE']
+
+  if iface == "lo"
+
+    puts "ignoring lo interface"
+    exit(0)
+
+  else
+
+    config_file = File.join("/etc", "ethtool.d", "#{iface}.conf")
+
+    if File.exist?(config_file)
+      config  = YAML.load_file(config_file)
+
+      config.each do |key, value|
+        value.each do |subkey, subvalue|
+
+          if ARGV[0] == "--test-mode"
+            puts "#{ethtool} --#{key} #{iface} #{subkey} #{subvalue}"
+          else
+            `#{ethtool} --#{key} #{iface} #{subkey} #{subvalue}`
+          end
+
+        end
+      end
+
+      exit(0)
+
+    else
+
+      puts "config for #{iface} doesn't exist"
+      exit(0)
+
+    end
+  end
+
+end

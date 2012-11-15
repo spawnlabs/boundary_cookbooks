@@ -1,0 +1,1 @@
+#set[:ethtool][:interfaces][:eth0][:coalesce][:'rx-usecs'] = 1

@@ -1,0 +1,6 @@
+<% @config.each do |key, value| %>
+<%= key %>:
+<% value.each do |subkey, subvalue| %>
+  <%= subkey %>: <%= subvalue %>
+<% end %>
+<% end %>

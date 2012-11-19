@@ -17,13 +17,20 @@ if node[:ethtool]
   if node[:ethtool][:interfaces]
 
     node[:ethtool][:interfaces].each do |iface, config|
-      template "/etc/ethtool.d/#{iface}.conf" do
-        source "iface.conf.erb"
-        mode 0644
-        owner "root"
-        group "root"
-        variables :config => config
+
+      # don't setup the config file if the interface doesnt exist
+      if node[:network][:interfaces][:"#{iface}"]
+
+        template "/etc/ethtool.d/#{iface}.conf" do
+          source "iface.conf.erb"
+          mode 0644
+          owner "root"
+          group "root"
+          variables :config => config
+        end
+
       end
+
     end
 
   end

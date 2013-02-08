@@ -25,3 +25,5 @@ default[:boundary][:bprobe][:collector][:hostname] = "collector.boundary.com"
 default[:boundary][:bprobe][:collector][:port] = "4740"
 
 default[:boundary][:bprobe][:tags] = []
+
+default[:boundary][:bprobe][:default_repo][:enable] = true

@@ -24,6 +24,7 @@ when "redhat", "centos", "amazon"
   yum_key "RPM-GPG-KEY-boundary" do
     url "https://yum.boundary.com/RPM-GPG-KEY-Boundary"
     action :add
+    only_if { node[:boundary][:bprobe][:default_repo][:enable] }
   end
 
   # default to 64bit
@@ -45,6 +46,7 @@ when "redhat", "centos", "amazon"
     url "https://yum.boundary.com/centos/os/#{rhel_platform_version}/#{machine}/"
     key "RPM-GPG-KEY-boundary"
     action :add
+    only_if { node[:boundary][:bprobe][:default_repo][:enable] }
   end
 
 when "ubuntu"
@@ -57,6 +59,7 @@ when "ubuntu"
     components ["universe"]
     key "https://apt.boundary.com/APT-GPG-KEY-Boundary"
     action :add
+    only_if { node[:boundary][:bprobe][:default_repo][:enable] }
   end
 
 when "debian"
@@ -69,6 +72,7 @@ when "debian"
     components ["main"]
     key "https://apt.boundary.com/APT-GPG-KEY-Boundary"
     action :add
+    only_if { node[:boundary][:bprobe][:default_repo][:enable] }
   end
 
 end

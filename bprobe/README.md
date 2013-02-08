@@ -30,3 +30,22 @@ override_attributes({
   }
 })
 ````
+
+##### Package repository
+
+Disable the default package repository(enabled by default). If you prefer to use your own repo, set this to false.
+
+````
+default[:boundary][:bprobe][:default_repo][:enable] = false
+````
+
+Or set in override attributes as follows:
+````
+"boundary": {
+    "bprobe": {
+        "default_repo": {
+            "enable": false
+        }   
+    }
+}
+````
